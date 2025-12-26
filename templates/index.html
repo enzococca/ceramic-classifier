@@ -472,7 +472,159 @@
         .lang-btn:hover {
             background: rgba(255,255,255,0.1);
         }
+
+        /* Plates Tab Styles */
+        .plates-container {
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .items-pool-card {
+            max-height: 650px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .items-pool {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            overflow-y: auto;
+            flex: 1;
+            max-height: 500px;
+        }
+        .pool-item {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: grab;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .pool-item:hover {
+            border-color: #48dbfb;
+            transform: scale(1.05);
+        }
+        .pool-item.selected {
+            border-color: #1dd1a1;
+            box-shadow: 0 0 10px rgba(29,209,161,0.5);
+        }
+        .pool-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .pool-item .item-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            font-size: 9px;
+            padding: 2px 4px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .preview-card {
+            display: flex;
+            flex-direction: column;
+        }
+        .plate-preview-container {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #platePreview {
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .plate-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 5px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-small:hover {
+            background: rgba(72,219,251,0.3);
+            border-color: #48dbfb;
+        }
+        .layout-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+        }
+        .layout-option {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .layout-option:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(72,219,251,0.3);
+        }
+        .layout-option.selected {
+            border-color: #48dbfb;
+            background: rgba(72,219,251,0.1);
+        }
+        .layout-preview {
+            width: 70px;
+            height: 99px;
+            background: white;
+            margin: 0 auto 8px;
+            border-radius: 4px;
+            display: grid;
+            padding: 4px;
+            gap: 2px;
+        }
+        .layout-preview.grid-2x2 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .layout-preview.grid-2x3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; }
+        .layout-preview.grid-3x3 { grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; }
+        .layout-preview.grid-1L4S { grid-template-columns: 1.5fr 1fr; grid-template-rows: 1fr 1fr 0.8fr; }
+        .layout-preview.grid-2L2S { grid-template-columns: 1fr 1fr; grid-template-rows: 1.3fr 1fr; }
+        .layout-preview.grid-3H { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr; }
+        .layout-preview.grid-1XL { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+        .layout-preview.grid-MIX6 { grid-template-columns: 1.5fr 1fr; grid-template-rows: 1.2fr 0.8fr 0.8fr; }
+        .layout-cell {
+            background: #ddd;
+            border-radius: 2px;
+        }
+        .layout-cell.span-2-rows { grid-row: span 2; }
+        .layout-name {
+            font-size: 11px;
+            color: #aaa;
+        }
+        .layout-cells {
+            font-size: 10px;
+            color: #666;
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 </head>
 <body>
     <!-- File Browser Modal -->
@@ -509,6 +661,7 @@
             <button class="tab active" onclick="showTab('config')">⚙️ Configuration</button>
             <button class="tab" onclick="showTab('classify')">🔬 Classification</button>
             <button class="tab" onclick="showTab('results')">📊 Results</button>
+            <button class="tab" onclick="showTab('plates')">📋 Plates</button>
             <button class="tab" onclick="showTab('help')">❓ Help</button>
         </div>
 
@@ -718,6 +871,80 @@
                 <div class="help-container" id="helpContent">
                     <p>Loading documentation...</p>
                 </div>
+            </div>
+        </div>
+
+        <!-- Plates Tab -->
+        <div id="tab-plates" class="tab-content">
+            <!-- Period Selection -->
+            <div class="card">
+                <h3>1️⃣ Select Content</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Period</label>
+                        <select id="platesPeriod" onchange="loadPlateItems()">
+                            <option value="">-- Select Period --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Caption Format</label>
+                        <select id="captionFormat" onchange="updatePlatePreview()">
+                            <option value="inv">Inv. {id}</option>
+                            <option value="inv_us">Inv. {id} (US {us})</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; gap: 10px; padding-top: 25px;">
+                        <input type="checkbox" id="platesGroupByUS" onchange="loadPlateItems()">
+                        <label for="platesGroupByUS" style="margin: 0;">Group by US</label>
+                    </div>
+                </div>
+                <div id="platesStats" style="margin-top: 10px; color: rgba(255,255,255,0.7);"></div>
+            </div>
+
+            <!-- Layout Selection -->
+            <div class="card">
+                <h3>2️⃣ Choose Layout</h3>
+                <div class="layout-gallery" id="layoutGallery"></div>
+            </div>
+
+            <!-- Main Content: Items Pool + Preview -->
+            <div class="plates-container">
+                <!-- Items Pool -->
+                <div class="card items-pool-card">
+                    <h3>3️⃣ Available Items <span id="itemsCount" style="color: rgba(255,255,255,0.5); font-size: 0.8em;"></span></h3>
+                    <div class="items-pool" id="itemsPool">
+                        <p style="color: rgba(255,255,255,0.5);">Select a period to load items...</p>
+                    </div>
+                </div>
+
+                <!-- Preview -->
+                <div class="card preview-card">
+                    <h3>4️⃣ Plate Preview</h3>
+                    <div class="plate-preview-container">
+                        <canvas id="platePreview" width="400" height="566"></canvas>
+                    </div>
+                    <div class="plate-nav">
+                        <button class="btn-small" onclick="prevPlate()">◀ Previous</button>
+                        <span id="plateNavInfo">Plate 1 of 1</span>
+                        <button class="btn-small" onclick="nextPlate()">Next ▶</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generate Actions -->
+            <div class="card">
+                <h3>5️⃣ Generate</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Starting Plate Number</label>
+                        <input type="number" id="startPlateNumber" value="1" min="1" style="width: 80px;">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end; gap: 10px;">
+                        <button class="btn-success" onclick="generatePlatesPDF()">📄 Generate PDF</button>
+                        <button class="btn-primary" onclick="generatePlatesExcel()">📊 Export Excel Report</button>
+                    </div>
+                </div>
+                <div id="platesGenerateStatus" style="margin-top: 15px;"></div>
             </div>
         </div>
     </div>
@@ -1439,6 +1666,7 @@
 
         // Load help on first tab switch
         let helpLoaded = false;
+        let platesLoaded = false;
         const originalShowTab = showTab;
         showTab = function(name) {
             originalShowTab(name);
@@ -1446,7 +1674,313 @@
                 loadHelpContent();
                 helpLoaded = true;
             }
+            if (name === 'plates' && !platesLoaded) {
+                initPlatesTab();
+                platesLoaded = true;
+            }
         };
+
+        // ===============================
+        // Plates Tab Functions
+        // ===============================
+
+        let platesItems = [];
+        let selectedPlateItems = [];
+        let selectedLayoutId = '2x2';
+        let currentPlateIndex = 0;
+        let platesLayouts = [];
+        let lastPlateAssignments = [];
+
+        function initPlatesTab() {
+            loadPlatesPeriods();
+            loadPlatesLayouts();
+        }
+
+        function loadPlatesPeriods() {
+            fetch('/api/plates/periods')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        const select = document.getElementById('platesPeriod');
+                        select.innerHTML = '<option value="">-- Select Period --</option>' +
+                            data.periods.map(p =>
+                                `<option value="${p.name}">${p.name} (${p.count})</option>`
+                            ).join('');
+                    }
+                });
+        }
+
+        function loadPlatesLayouts() {
+            fetch('/api/plates/layouts')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        platesLayouts = data.layouts;
+                        renderLayoutGallery(data.layouts);
+                    }
+                });
+        }
+
+        function renderLayoutGallery(layouts) {
+            const gallery = document.getElementById('layoutGallery');
+            gallery.innerHTML = layouts.map(layout => {
+                const cellCount = layout.cells;
+                let cellsHtml = '';
+                for (let i = 0; i < cellCount; i++) {
+                    cellsHtml += '<div class="layout-cell"></div>';
+                }
+                const isSelected = layout.id === selectedLayoutId;
+                return `
+                    <div class="layout-option ${isSelected ? 'selected' : ''}"
+                         onclick="selectLayout('${layout.id}')">
+                        <div class="layout-preview grid-${layout.id}">
+                            ${cellsHtml}
+                        </div>
+                        <div class="layout-name">${layout.name}</div>
+                        <div class="layout-cells">${layout.cells} cells</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectLayout(layoutId) {
+            selectedLayoutId = layoutId;
+            document.querySelectorAll('.layout-option').forEach(el => {
+                el.classList.toggle('selected', el.querySelector('.layout-preview').classList.contains('grid-' + layoutId));
+            });
+            updatePlatePreview();
+        }
+
+        function loadPlateItems() {
+            const period = document.getElementById('platesPeriod').value;
+            if (!period) {
+                document.getElementById('itemsPool').innerHTML =
+                    '<p style="color: rgba(255,255,255,0.5);">Select a period to load items...</p>';
+                return;
+            }
+
+            const groupByUS = document.getElementById('platesGroupByUS').checked;
+
+            fetch(`/api/plates/items?period=${encodeURIComponent(period)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        platesItems = data.items;
+
+                        // Auto-select all items
+                        selectedPlateItems = [...platesItems];
+
+                        renderItemsPool();
+                        updatePlatesStats();
+                        updatePlatePreview();
+                    }
+                });
+        }
+
+        function renderItemsPool() {
+            const pool = document.getElementById('itemsPool');
+
+            if (platesItems.length === 0) {
+                pool.innerHTML = '<p style="color: rgba(255,255,255,0.5);">No items found for this period.</p>';
+                return;
+            }
+
+            pool.innerHTML = platesItems.map((item, idx) => {
+                const isSelected = selectedPlateItems.some(s => s.id === item.id);
+                return `
+                    <div class="pool-item ${isSelected ? 'selected' : ''}"
+                         onclick="toggleItemSelection(${idx})"
+                         title="Inv. ${item.id}${item.us ? ' (US ' + item.us + ')' : ''}">
+                        <img src="${item.thumbnail || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='}"
+                             alt="${item.id}">
+                        <div class="item-label">${item.id}</div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('itemsCount').textContent = `(${selectedPlateItems.length}/${platesItems.length} selected)`;
+        }
+
+        function toggleItemSelection(idx) {
+            const item = platesItems[idx];
+            const existingIdx = selectedPlateItems.findIndex(s => s.id === item.id);
+
+            if (existingIdx >= 0) {
+                selectedPlateItems.splice(existingIdx, 1);
+            } else {
+                selectedPlateItems.push(item);
+            }
+
+            renderItemsPool();
+            updatePlatesStats();
+            updatePlatePreview();
+        }
+
+        function updatePlatesStats() {
+            const layout = platesLayouts.find(l => l.id === selectedLayoutId);
+            const cellsPerPlate = layout ? layout.cells : 4;
+            const totalPlates = Math.ceil(selectedPlateItems.length / cellsPerPlate);
+
+            document.getElementById('platesStats').innerHTML =
+                `<strong>${selectedPlateItems.length}</strong> items selected →
+                 <strong>${totalPlates}</strong> plate${totalPlates !== 1 ? 's' : ''}
+                 (${cellsPerPlate} per plate)`;
+        }
+
+        function updatePlatePreview() {
+            const layout = platesLayouts.find(l => l.id === selectedLayoutId);
+            if (!layout) return;
+
+            const cellsPerPlate = layout.cells;
+            const totalPlates = Math.max(1, Math.ceil(selectedPlateItems.length / cellsPerPlate));
+
+            // Clamp current plate index
+            currentPlateIndex = Math.min(currentPlateIndex, totalPlates - 1);
+            currentPlateIndex = Math.max(0, currentPlateIndex);
+
+            // Update navigation
+            document.getElementById('plateNavInfo').textContent =
+                `Plate ${currentPlateIndex + 1} of ${totalPlates}`;
+
+            // Get items for current plate
+            const startIdx = currentPlateIndex * cellsPerPlate;
+            const plateItems = selectedPlateItems.slice(startIdx, startIdx + cellsPerPlate);
+
+            // Generate preview via API
+            const captionFormat = document.getElementById('captionFormat').value;
+
+            fetch('/api/plates/preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    items: plateItems,
+                    layout_id: selectedLayoutId,
+                    caption_format: captionFormat
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.preview) {
+                    const canvas = document.getElementById('platePreview');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
+                    img.onload = function() {
+                        // Scale to fit canvas
+                        const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+                        const x = (canvas.width - img.width * scale) / 2;
+                        const y = (canvas.height - img.height * scale) / 2;
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+                    };
+                    img.src = data.preview;
+                }
+            })
+            .catch(err => console.error('Preview error:', err));
+        }
+
+        function prevPlate() {
+            if (currentPlateIndex > 0) {
+                currentPlateIndex--;
+                updatePlatePreview();
+            }
+        }
+
+        function nextPlate() {
+            const layout = platesLayouts.find(l => l.id === selectedLayoutId);
+            const cellsPerPlate = layout ? layout.cells : 4;
+            const totalPlates = Math.ceil(selectedPlateItems.length / cellsPerPlate);
+
+            if (currentPlateIndex < totalPlates - 1) {
+                currentPlateIndex++;
+                updatePlatePreview();
+            }
+        }
+
+        function generatePlatesPDF() {
+            const period = document.getElementById('platesPeriod').value;
+            if (!period || selectedPlateItems.length === 0) {
+                alert('Please select a period and at least one item.');
+                return;
+            }
+
+            const statusDiv = document.getElementById('platesGenerateStatus');
+            statusDiv.innerHTML = '<span style="color:#feca57">Generating PDF...</span>';
+
+            fetch('/api/plates/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    items: selectedPlateItems,
+                    layout_id: selectedLayoutId,
+                    period: period,
+                    group_by_us: document.getElementById('platesGroupByUS').checked,
+                    caption_format: document.getElementById('captionFormat').value,
+                    start_plate_number: parseInt(document.getElementById('startPlateNumber').value) || 1
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    statusDiv.innerHTML = `
+                        <span style="color:#1dd1a1">✓ Generated ${data.plates_count} plate(s) with ${data.items_count} items</span>
+                        <button class="btn-primary" style="margin-left: 15px;"
+                                onclick="window.open('/api/plates/download/${data.filename}')">
+                            📥 Download PDF
+                        </button>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `<span style="color:#ff6b6b">✗ Error: ${data.error}</span>`;
+                }
+            })
+            .catch(err => {
+                statusDiv.innerHTML = `<span style="color:#ff6b6b">✗ Error: ${err.message}</span>`;
+            });
+        }
+
+        function generatePlatesExcel() {
+            if (lastPlateAssignments.length === 0 && selectedPlateItems.length === 0) {
+                alert('Please generate plates first or select items.');
+                return;
+            }
+
+            // Build assignments from current selection
+            const layout = platesLayouts.find(l => l.id === selectedLayoutId);
+            const cellsPerPlate = layout ? layout.cells : 4;
+            const period = document.getElementById('platesPeriod').value;
+            const startNum = parseInt(document.getElementById('startPlateNumber').value) || 1;
+
+            const assignments = selectedPlateItems.map((item, idx) => ({
+                plate_number: startNum + Math.floor(idx / cellsPerPlate),
+                position: (idx % cellsPerPlate) + 1,
+                id: item.id,
+                us: item.us || '',
+                period: period,
+                layout: selectedLayoutId
+            }));
+
+            const statusDiv = document.getElementById('platesGenerateStatus');
+            statusDiv.innerHTML = '<span style="color:#feca57">Generating Excel report...</span>';
+
+            fetch('/api/plates/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assignments })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    statusDiv.innerHTML = `
+                        <span style="color:#1dd1a1">✓ Excel report generated</span>
+                        <button class="btn-primary" style="margin-left: 15px;"
+                                onclick="window.open('/api/plates/download/${data.filename}')">
+                            📥 Download Excel
+                        </button>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `<span style="color:#ff6b6b">✗ Error: ${data.error}</span>`;
+                }
+            });
+        }
     </script>
 </body>
 </html>
