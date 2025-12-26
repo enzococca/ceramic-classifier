@@ -1,0 +1,44 @@
+{
+  "database": {
+    "type": "excel",
+    "connection": {
+      "file_path": "/Users/enzo/ceramica-classifier/examples/esempio_utente_semplice.xlsx",
+      "database": "/Users/enzo/ceramica-classifier/examples/esempio_utente_semplice.xlsx"
+    }
+  },
+  "pottery": {
+    "fields": {
+      "area": "Area_Scavo",
+      "decoration": "Tipo_Decorazione",
+      "decoration_type": "Tipo_Decorazione",
+      "description": "Note",
+      "fabric": "Impasto",
+      "form": "Tipo_Forma",
+      "period": "Cronologia",
+      "site": "Sito_Archeologico",
+      "us": "Unita_Stratigrafica"
+    },
+    "id_field": "Numero_Inventario",
+    "name": "Ceramiche"
+  },
+  "media": {
+    "filename_field": "File_Immagine",
+    "id_field": null,
+    "name": null,
+    "path_field": null
+  },
+  "relation": {
+    "direct_image_field": "File_Immagine",
+    "entity_type_field": null,
+    "entity_type_value": null,
+    "junction_table": null,
+    "media_fk": null,
+    "pottery_fk": null,
+    "type": "embedded"
+  },
+  "images": {
+    "base_path": "/Volumes/extesione4T/KTM2025/photolog/original",
+    "pattern": "{File_Immagine}"
+  },
+  "query": "SELECT DISTINCT ON (p.Numero_Inventario) p.Numero_Inventario as id, p.Sito_Archeologico as site, p.Area_Scavo as area, p.Unita_Stratigrafica as us, p.Tipo_Forma as form, p.Tipo_Decorazione as decoration, p.Tipo_Decorazione as decoration_type, p.Impasto as fabric, p.Cronologia as period, p.Note as description\n        FROM Ceramiche p\n        \n        WHERE p.Decorazione_Esterna = 'S\u00ec'\n        ORDER BY p.Numero_Inventario"
+}

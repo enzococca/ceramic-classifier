@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ceramica Classifier - Umm an-Nar to Wadi Suq, LBA, Iron Age</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1600px; margin: 0 auto; padding: 20px; }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .system-description {
+            max-width: 900px;
+            margin: 15px auto 0;
+            font-size: 0.95em;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+
+        .tab {
+            padding: 12px 25px;
+            background: rgba(255,255,255,0.05);
+            border: none;
+            border-radius: 8px 8px 0 0;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: rgba(255,107,107,0.2);
+            color: #ff6b6b;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Cards */
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .card h3 {
+            color: #48dbfb;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #aaa;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #48dbfb;
+        }
+
+        textarea { min-height: 150px; font-family: monospace; }
+
+        /* Buttons */
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary { background: linear-gradient(45deg, #48dbfb, #0abde3); color: #fff; }
+        .btn-success { background: linear-gradient(45deg, #1dd1a1, #10ac84); color: #fff; }
+        .btn-warning { background: linear-gradient(45deg, #feca57, #ff9f43); color: #000; }
+        .btn-danger { background: linear-gradient(45deg, #ff6b6b, #ee5a24); color: #fff; }
+        .btn-ai { background: linear-gradient(45deg, #a55eea, #8854d0); color: #fff; }
+
+        button:hover { transform: translateY(-2px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* Database Type Selector */
+        .db-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .db-type {
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .db-type:hover { background: rgba(255,255,255,0.1); }
+        .db-type.selected { border-color: #48dbfb; background: rgba(72,219,251,0.1); }
+
+        .db-type .icon { font-size: 2em; margin-bottom: 8px; }
+        .db-type .name { font-size: 12px; color: #aaa; }
+
+        /* Status */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .status-idle { background: #555; }
+        .status-running { background: #1dd1a1; }
+        .status-completed { background: #48dbfb; }
+        .status-error { background: #ff6b6b; }
+
+        /* Progress */
+        .progress-bar {
+            height: 25px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #48dbfb, #a55eea);
+            border-radius: 12px;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value { font-size: 2em; font-weight: 700; color: #48dbfb; }
+        .stat-label { color: #888; font-size: 0.9em; }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .chart-container { height: 300px; }
+
+        /* Current Item */
+        .current-item {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .current-thumbnail {
+            width: 100px;
+            height: 100px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .current-info { flex: 1; }
+        .current-info h4 { color: #48dbfb; margin-bottom: 10px; }
+
+        .ml-result {
+            background: rgba(165,94,234,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #a55eea;
+        }
+
+        /* Results Table */
+        .results-container { max-height: 400px; overflow-y: auto; }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .results-table th {
+            background: rgba(72,219,251,0.2);
+            padding: 10px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+        }
+
+        .results-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .results-table img {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            object-fit: cover;
+        }
+
+        /* AI Section */
+        .ai-section {
+            background: linear-gradient(135deg, rgba(165,94,234,0.1) 0%, rgba(136,84,208,0.1) 100%);
+            border: 1px solid rgba(165,94,234,0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .ai-section h3 {
+            color: #a55eea;
+        }
+
+        /* Log */
+        .log-container {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .log-entry { padding: 3px 0; }
+        .log-entry.success { color: #1dd1a1; }
+        .log-entry.error { color: #ff6b6b; }
+        .log-entry.info { color: #48dbfb; }
+
+        /* Schema Preview */
+        .schema-preview {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .charts-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+
+        /* Small buttons */
+        .btn-small {
+            padding: 8px 12px;
+            background: rgba(72,219,251,0.2);
+            border: 1px solid #48dbfb;
+            border-radius: 6px;
+            color: #48dbfb;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        .btn-small:hover {
+            background: rgba(72,219,251,0.4);
+        }
+
+        /* File Browser Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #1a1a3e;
+            border-radius: 15px;
+            padding: 25px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .modal-header h3 {
+            color: #48dbfb;
+            margin: 0;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .browser-path {
+            background: rgba(0,0,0,0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #feca57;
+            word-break: break-all;
+        }
+        .browser-list {
+            max-height: 400px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .browser-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+        }
+        .browser-item:hover {
+            background: rgba(72,219,251,0.1);
+        }
+        .browser-item.selected {
+            background: rgba(29,209,161,0.2);
+        }
+        .browser-item .icon {
+            font-size: 20px;
+        }
+        .browser-item .name {
+            flex: 1;
+        }
+        .browser-item .info {
+            color: #888;
+            font-size: 11px;
+        }
+        .modal-footer {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Help Section */
+        .help-container {
+            max-height: 70vh;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 25px;
+        }
+        .help-container h1 { color: #ff6b6b; font-size: 1.8em; margin-bottom: 20px; }
+        .help-container h2 { color: #48dbfb; font-size: 1.4em; margin: 25px 0 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .help-container h3 { color: #feca57; font-size: 1.1em; margin: 20px 0 10px 0; }
+        .help-container p { color: #ccc; line-height: 1.7; margin-bottom: 15px; }
+        .help-container pre { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; overflow-x: auto; margin: 15px 0; font-size: 12px; }
+        .help-container code { background: rgba(72,219,251,0.2); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+        .help-container ul, .help-container ol { margin: 10px 0 15px 25px; color: #bbb; }
+        .help-container li { margin: 5px 0; line-height: 1.6; }
+        .help-container table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .help-container th { background: rgba(72,219,251,0.2); padding: 10px; text-align: left; }
+        .help-container td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #bbb; }
+        .lang-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .lang-btn {
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            background: transparent;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .lang-btn.active {
+            background: rgba(72,219,251,0.2);
+            border-color: #48dbfb;
+            color: #48dbfb;
+        }
+        .lang-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- File Browser Modal -->
+    <div class="modal-overlay" id="fileBrowserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="browserTitle">📂 Sfoglia</h3>
+                <button class="modal-close" onclick="closeFileBrowser()">&times;</button>
+            </div>
+            <div class="browser-path" id="browserPath">/</div>
+            <div class="browser-list" id="browserList"></div>
+            <div class="modal-footer">
+                <button class="btn-warning" onclick="closeFileBrowser()">Cancel</button>
+                <button class="btn-success" onclick="confirmBrowserSelection()">✓ Select</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>🏺 Ceramica Classifier</h1>
+            <p>ML Classification System for Umm an-Nar to Wadi Suq, Late Bronze Age, Iron Age</p>
+            <p class="system-description">
+                This system uses Machine Learning to automatically classify decorated pottery sherds from Oman archaeological excavations.
+                By comparing pottery decorations with a reference collection (Schmidt 1937 corpus and other sources),
+                it identifies typological parallels and suggests chronological attributions from the Umm an-Nar period through
+                Wadi Suq, Late Bronze Age, and Iron Age. Upload your database or Excel file, configure the image path,
+                and let AI find the best matches for your pottery decorations.
+            </p>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('config')">⚙️ Configuration</button>
+            <button class="tab" onclick="showTab('classify')">🔬 Classification</button>
+            <button class="tab" onclick="showTab('results')">📊 Results</button>
+            <button class="tab" onclick="showTab('help')">❓ Help</button>
+        </div>
+
+        <!-- Configuration Tab -->
+        <div id="tab-config" class="tab-content active">
+            <!-- Database Selection -->
+            <div class="card">
+                <h3>1️⃣ Select Database Type</h3>
+                <div class="db-types" id="dbTypes"></div>
+            </div>
+
+            <!-- Connection Settings -->
+            <div class="card" id="connectionCard" style="display: none;">
+                <h3>2️⃣ Database Connection</h3>
+                <div id="connectionFields"></div>
+                <div style="margin-top: 15px;">
+                    <button class="btn-primary" onclick="testConnection()">🔌 Test Connection</button>
+                    <button class="btn-success" onclick="getSchema()" id="btnGetSchema" disabled>📋 Get Schema</button>
+                </div>
+                <div id="connectionStatus" style="margin-top: 15px;"></div>
+            </div>
+
+            <!-- AI Analysis -->
+            <div class="ai-section" id="aiSection" style="display: none;">
+                <h3>🤖 AI Analysis with Claude</h3>
+                <p style="color: #aaa; margin-bottom: 15px;">Claude will analyze the database schema and automatically configure the mapping for pottery classification.</p>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Claude API Key <span id="apiKeyStatus" style="font-size:11px;"></span></label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="password" id="apiKey" placeholder="sk-ant-..." style="flex:1;">
+                            <button class="btn-small" onclick="saveApiKey()" title="Save API Key">💾</button>
+                            <button class="btn-small" onclick="toggleApiKeyVisibility()" title="Show/Hide">👁️</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Base Image Path</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="imagePath" placeholder="/path/to/images" style="flex:1;">
+                            <button class="btn-small" onclick="openImageBrowser()" title="Browse folders">📂</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-ai" onclick="analyzeWithAI()">🧠 Analyze with Claude AI</button>
+                <button class="btn-warning" onclick="showManualConfig()" style="margin-left: 10px;">✏️ Configure Manually</button>
+
+                <div id="aiResult" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- Schema Preview -->
+            <div class="card" id="schemaCard" style="display: none;">
+                <h3>📋 Database Schema</h3>
+                <div class="schema-preview" id="schemaPreview"></div>
+            </div>
+
+            <!-- Manual Configuration -->
+            <div class="card" id="manualConfig" style="display: none;">
+                <h3>3️⃣ Mapping Configuration</h3>
+
+                <div class="form-group">
+                    <label>Pottery Table</label>
+                    <select id="potteryTable" onchange="loadTableColumns('potteryTable', 'potteryFields')">
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
+
+                <div class="form-row" id="potteryFields"></div>
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>Media/Images Table</label>
+                    <select id="mediaTable" onchange="loadTableColumns('mediaTable', 'mediaFields')">
+                        <option value="">-- None (direct images) --</option>
+                    </select>
+                </div>
+
+                <div class="form-row" id="mediaFields"></div>
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>Custom SQL Query (optional)</label>
+                    <textarea id="customQuery" placeholder="SELECT p.id, p.form, m.filename FROM pottery p JOIN media m ON ..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Image Path Pattern</label>
+                    <input type="text" id="imagePattern" placeholder="{media_id}_{filename}.png">
+                    <small style="color: #666;">Use {field} to substitute values. E.g.: {media_id}_{filename}.png</small>
+                </div>
+
+                <button class="btn-success" onclick="saveConfig()">💾 Save Configuration</button>
+            </div>
+
+            <!-- Saved Configs -->
+            <div class="card">
+                <h3>📁 Saved Configurations</h3>
+                <div id="savedConfigs"></div>
+            </div>
+        </div>
+
+        <!-- Classification Tab -->
+        <div id="tab-classify" class="tab-content">
+            <div class="card">
+                <h3>🚀 Start Classification</h3>
+                <div class="form-row" style="align-items: end;">
+                    <div class="form-group">
+                        <label>Configuration</label>
+                        <select id="configSelect">
+                            <option value="">-- Select configuration --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Limit (optional)</label>
+                        <input type="number" id="limitInput" placeholder="All" min="1">
+                    </div>
+                    <div>
+                        <button class="btn-success" id="btnStart" onclick="startClassification()">▶ Start</button>
+                        <button class="btn-warning" id="btnPause" onclick="togglePause()" disabled>⏸ Pause</button>
+                        <button class="btn-danger" id="btnStop" onclick="stopClassification()" disabled>⏹ Stop</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="statProcessed">0</div>
+                    <div class="stat-label">Processed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statErrors">0</div>
+                    <div class="stat-label">Errors</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statTime">--:--</div>
+                    <div class="stat-label">Time</div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+            </div>
+
+            <!-- Current Item -->
+            <div class="card">
+                <h3>📷 Current Item</h3>
+                <div class="current-item">
+                    <img class="current-thumbnail" id="currentThumbnail" src="">
+                    <div class="current-info">
+                        <h4 id="currentTitle">Waiting...</h4>
+                        <div id="currentDetails"></div>
+                    </div>
+                    <div class="ml-result" id="mlResult" style="display: none;">
+                        <strong>ML Result</strong>
+                        <div id="mlDetails"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="card">
+                    <h3>📊 Period Distribution</h3>
+                    <div class="chart-container" id="periodChart"></div>
+                </div>
+                <div class="card">
+                    <h3>🎨 Decorations</h3>
+                    <div class="chart-container" id="decorationChart"></div>
+                </div>
+            </div>
+
+            <!-- Log -->
+            <div class="card">
+                <h3>📝 Log</h3>
+                <div class="log-container" id="logContainer"></div>
+            </div>
+        </div>
+
+        <!-- Results Tab -->
+        <div id="tab-results" class="tab-content">
+            <div class="card">
+                <h3>📋 Classification Results</h3>
+                <button class="btn-success" onclick="exportResults()">📥 Export Excel</button>
+                <div class="results-container" style="margin-top: 20px;">
+                    <table class="results-table">
+                        <thead>
+                            <tr id="resultsHeader"></tr>
+                        </thead>
+                        <tbody id="resultsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Tab -->
+        <div id="tab-help" class="tab-content">
+            <div class="card">
+                <h3>📚 Documentation</h3>
+                <div class="lang-toggle">
+                    <button class="lang-btn active" id="langEn" onclick="setHelpLang('en')">🇬🇧 English</button>
+                    <button class="lang-btn" id="langIt" onclick="setHelpLang('it')">🇮🇹 Italiano</button>
+                </div>
+                <div class="help-container" id="helpContent">
+                    <p>Loading documentation...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let currentSchema = null;
+        let currentConfig = null;
+        let startTime = null;
+        let timerInterval = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDbTypes();
+            loadSavedConfigs();
+            initCharts();
+            loadApiKey();
+        });
+
+        // ===============================
+        // File Browser Functions
+        // ===============================
+        let browserTargetId = null;
+        let browserMode = 'file'; // 'file' or 'folder'
+        let browserCurrentPath = '/';
+        let browserSelectedPath = null;
+
+        function openFileBrowser(targetId, mode = 'file') {
+            browserTargetId = targetId;
+            browserMode = mode;
+            browserSelectedPath = null;
+
+            // Start from current value or root
+            const currentValue = document.getElementById(targetId)?.value || '';
+            if (currentValue) {
+                // Navigate to parent directory of current value
+                const parts = currentValue.split('/');
+                parts.pop();
+                browserCurrentPath = parts.join('/') || '/';
+            } else {
+                browserCurrentPath = '/';
+            }
+
+            document.getElementById('browserTitle').textContent = mode === 'folder' ? '📂 Select Folder' : '📄 Select File';
+            document.getElementById('fileBrowserModal').classList.add('active');
+            loadBrowserDirectory(browserCurrentPath);
+        }
+
+        function openImageBrowser() {
+            openFileBrowser('imagePath', 'folder');
+        }
+
+        function closeFileBrowser() {
+            document.getElementById('fileBrowserModal').classList.remove('active');
+            browserTargetId = null;
+            browserSelectedPath = null;
+        }
+
+        function loadBrowserDirectory(path) {
+            browserCurrentPath = path;
+            document.getElementById('browserPath').textContent = path;
+            document.getElementById('browserList').innerHTML = '<div style="padding:20px;text-align:center;color:#888;">Loading...</div>';
+
+            const endpoint = browserMode === 'folder' ? '/api/browse-images' : '/api/browse';
+
+            fetch(`${endpoint}?path=${encodeURIComponent(path)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        renderBrowserItems(data.items, data.current_path);
+                    } else {
+                        document.getElementById('browserList').innerHTML =
+                            `<div style="padding:20px;text-align:center;color:#ff6b6b;">${data.error}</div>`;
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('browserList').innerHTML =
+                        `<div style="padding:20px;text-align:center;color:#ff6b6b;">Errore: ${err.message}</div>`;
+                });
+        }
+
+        function renderBrowserItems(items, currentPath) {
+            const container = document.getElementById('browserList');
+            let html = '';
+
+            // Items (backend already includes '..' parent directory when needed)
+            items.forEach(item => {
+                // Special handling for parent directory
+                if (item.name === '..') {
+                    html += `
+                        <div class="browser-item" onclick="loadBrowserDirectory('${item.path.replace(/'/g, "\\'")}')">
+                            <span class="icon">⬆️</span>
+                            <span class="name">..</span>
+                            <span class="info">Parent folder</span>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const icon = item.is_dir ? '📁' : getFileIcon(item.name);
+                const clickAction = item.is_dir
+                    ? `loadBrowserDirectory('${item.path.replace(/'/g, "\\'")}')`
+                    : `selectBrowserItem('${item.path.replace(/'/g, "\\'")}')`;
+
+                // Show image count for directories if available
+                const info = item.is_dir
+                    ? (item.image_count ? `${item.image_count} images` : 'Folder')
+                    : formatFileSize(item.size || 0);
+
+                html += `
+                    <div class="browser-item" id="item-${item.name.replace(/[^a-zA-Z0-9]/g, '_')}"
+                         onclick="${clickAction}"
+                         ondblclick="${item.is_dir ? clickAction : 'confirmBrowserSelection()'}">
+                        <span class="icon">${icon}</span>
+                        <span class="name">${item.name}</span>
+                        <span class="info">${info}</span>
+                    </div>
+                `;
+            });
+
+            if (items.length === 0 && currentPath === '/') {
+                html = '<div style="padding:20px;text-align:center;color:#888;">No items found</div>';
+            }
+
+            container.innerHTML = html;
+
+            // For folder mode, auto-select current directory
+            if (browserMode === 'folder') {
+                browserSelectedPath = currentPath;
+            }
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'xlsx': '📊', 'xls': '📊',
+                'csv': '📋',
+                'db': '🗃️', 'sqlite': '🗃️', 'sqlite3': '🗃️',
+                'png': '🖼️', 'jpg': '🖼️', 'jpeg': '🖼️', 'gif': '🖼️',
+                'pdf': '📕',
+                'json': '📄'
+            };
+            return icons[ext] || '📄';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function selectBrowserItem(path) {
+            // Remove previous selection
+            document.querySelectorAll('.browser-item.selected').forEach(el => el.classList.remove('selected'));
+
+            // Select this item
+            browserSelectedPath = path;
+            const itemId = 'item-' + path.split('/').pop().replace(/[^a-zA-Z0-9]/g, '_');
+            document.getElementById(itemId)?.classList.add('selected');
+        }
+
+        function confirmBrowserSelection() {
+            if (browserSelectedPath && browserTargetId) {
+                document.getElementById(browserTargetId).value = browserSelectedPath;
+                closeFileBrowser();
+            } else if (browserMode === 'folder' && browserCurrentPath) {
+                document.getElementById(browserTargetId).value = browserCurrentPath;
+                closeFileBrowser();
+            } else {
+                alert('Please select an item');
+            }
+        }
+
+        // ===============================
+        // API Key Management
+        // ===============================
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKey').value;
+            if (!apiKey) {
+                alert('Inserisci prima l\'API Key');
+                return;
+            }
+
+            fetch('/api/save-api-key', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ api_key: apiKey })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('apiKeyStatus').innerHTML = '<span style="color:#1dd1a1;">✓ Saved</span>';
+                    setTimeout(() => {
+                        document.getElementById('apiKeyStatus').innerHTML = '';
+                    }, 3000);
+                } else {
+                    alert('Errore: ' + data.message);
+                }
+            });
+        }
+
+        function loadApiKey() {
+            fetch('/api/load-api-key')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.api_key) {
+                        document.getElementById('apiKey').value = data.api_key;
+                        document.getElementById('apiKeyStatus').innerHTML =
+                            `<span style="color:#48dbfb;">(salvata: ${data.masked})</span>`;
+                    }
+                })
+                .catch(() => {
+                    // No saved key, that's fine
+                });
+        }
+
+        function toggleApiKeyVisibility() {
+            const input = document.getElementById('apiKey');
+            if (input.type === 'password') {
+                input.type = 'text';
+            } else {
+                input.type = 'password';
+            }
+        }
+
+        // Tabs
+        function showTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[onclick="showTab('${name}')"]`).classList.add('active');
+            document.getElementById(`tab-${name}`).classList.add('active');
+        }
+
+        // Database Types
+        function loadDbTypes() {
+            fetch('/api/db-types')
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById('dbTypes');
+                    container.innerHTML = data.types.map(t => `
+                        <div class="db-type" onclick="selectDbType('${t.id}')" id="db-${t.id}">
+                            <div class="icon">${t.icon}</div>
+                            <div class="name">${t.name}</div>
+                        </div>
+                    `).join('');
+                });
+        }
+
+        let selectedDbType = null;
+
+        function selectDbType(type) {
+            document.querySelectorAll('.db-type').forEach(d => d.classList.remove('selected'));
+            document.getElementById(`db-${type}`).classList.add('selected');
+            selectedDbType = type;
+            showConnectionFields(type);
+        }
+
+        function showConnectionFields(type) {
+            const card = document.getElementById('connectionCard');
+            const container = document.getElementById('connectionFields');
+            card.style.display = 'block';
+
+            const fields = {
+                postgresql: `
+                    <div class="form-row">
+                        <div class="form-group"><label>Host</label><input type="text" id="dbHost" value="localhost"></div>
+                        <div class="form-group"><label>Port</label><input type="number" id="dbPort" value="5432"></div>
+                        <div class="form-group"><label>Database</label><input type="text" id="dbName"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>User</label><input type="text" id="dbUser" value="postgres"></div>
+                        <div class="form-group"><label>Password</label><input type="password" id="dbPassword"></div>
+                    </div>
+                `,
+                mysql: `
+                    <div class="form-row">
+                        <div class="form-group"><label>Host</label><input type="text" id="dbHost" value="localhost"></div>
+                        <div class="form-group"><label>Port</label><input type="number" id="dbPort" value="3306"></div>
+                        <div class="form-group"><label>Database</label><input type="text" id="dbName"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>User</label><input type="text" id="dbUser" value="root"></div>
+                        <div class="form-group"><label>Password</label><input type="password" id="dbPassword"></div>
+                    </div>
+                `,
+                sqlite: `
+                    <div class="form-group">
+                        <label>Database File</label>
+                        <div style="display:flex;gap:10px;">
+                            <input type="text" id="dbFile" placeholder="/path/to/database.db" style="flex:1;">
+                            <button class="btn-small" onclick="openFileBrowser('dbFile', 'file')" title="Sfoglia">📂</button>
+                        </div>
+                    </div>
+                `,
+                mongodb: `
+                    <div class="form-row">
+                        <div class="form-group"><label>URI (opzionale)</label><input type="text" id="dbUri" placeholder="mongodb://localhost:27017"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Host</label><input type="text" id="dbHost" value="localhost"></div>
+                        <div class="form-group"><label>Port</label><input type="number" id="dbPort" value="27017"></div>
+                        <div class="form-group"><label>Database</label><input type="text" id="dbName"></div>
+                    </div>
+                `,
+                excel: `
+                    <div class="form-group">
+                        <label>File Excel</label>
+                        <div style="display:flex;gap:10px;">
+                            <input type="text" id="dbFile" placeholder="/path/to/file.xlsx" style="flex:1;">
+                            <button class="btn-small" onclick="openFileBrowser('dbFile', 'file')" title="Sfoglia">📂</button>
+                        </div>
+                    </div>
+                `,
+                csv: `
+                    <div class="form-group">
+                        <label>File CSV o Cartella</label>
+                        <div style="display:flex;gap:10px;">
+                            <input type="text" id="dbFile" placeholder="/path/to/file.csv or /path/to/folder" style="flex:1;">
+                            <button class="btn-small" onclick="openFileBrowser('dbFile', 'file')" title="Sfoglia">📂</button>
+                        </div>
+                    </div>
+                `
+            };
+
+            container.innerHTML = fields[type] || '';
+        }
+
+        function getConnectionConfig() {
+            const config = { type: selectedDbType };
+
+            if (['postgresql', 'mysql'].includes(selectedDbType)) {
+                config.connection = {
+                    host: document.getElementById('dbHost')?.value,
+                    port: parseInt(document.getElementById('dbPort')?.value),
+                    database: document.getElementById('dbName')?.value,
+                    user: document.getElementById('dbUser')?.value,
+                    password: document.getElementById('dbPassword')?.value
+                };
+            } else if (selectedDbType === 'mongodb') {
+                config.connection = {
+                    uri: document.getElementById('dbUri')?.value,
+                    host: document.getElementById('dbHost')?.value,
+                    port: parseInt(document.getElementById('dbPort')?.value),
+                    database: document.getElementById('dbName')?.value
+                };
+            } else {
+                config.connection = {
+                    file_path: document.getElementById('dbFile')?.value,
+                    database: document.getElementById('dbFile')?.value
+                };
+            }
+
+            return config;
+        }
+
+        function testConnection() {
+            const config = getConnectionConfig();
+            document.getElementById('connectionStatus').innerHTML = '<span style="color:#feca57">Testing...</span>';
+
+            fetch('/api/test-connection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ db_type: config.type, config: config.connection })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('connectionStatus').innerHTML = `<span style="color:#1dd1a1">✓ ${data.message}</span>`;
+                    document.getElementById('btnGetSchema').disabled = false;
+                } else {
+                    document.getElementById('connectionStatus').innerHTML = `<span style="color:#ff6b6b">✗ ${data.message}</span>`;
+                }
+            });
+        }
+
+        function getSchema() {
+            const config = getConnectionConfig();
+            document.getElementById('connectionStatus').innerHTML = '<span style="color:#feca57">Loading schema...</span>';
+
+            fetch('/api/get-schema', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ db_type: config.type, config: config.connection })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    currentSchema = data.schema;
+                    document.getElementById('schemaCard').style.display = 'block';
+                    document.getElementById('schemaPreview').textContent = JSON.stringify(data.schema, null, 2);
+                    document.getElementById('aiSection').style.display = 'block';
+                    document.getElementById('connectionStatus').innerHTML = '<span style="color:#1dd1a1">✓ Schema loaded</span>';
+
+                    // Populate table selects
+                    const tables = Object.keys(data.schema.tables);
+                    ['potteryTable', 'mediaTable'].forEach(id => {
+                        const select = document.getElementById(id);
+                        select.innerHTML = '<option value="">-- Select --</option>' +
+                            tables.map(t => `<option value="${t}">${t}</option>`).join('');
+                    });
+                } else {
+                    document.getElementById('connectionStatus').innerHTML = `<span style="color:#ff6b6b">✗ ${data.error}</span>`;
+                }
+            });
+        }
+
+        function analyzeWithAI() {
+            const apiKey = document.getElementById('apiKey').value;
+            const imagePath = document.getElementById('imagePath').value;
+
+            if (!apiKey) {
+                alert('Please enter your Claude API Key');
+                return;
+            }
+
+            document.getElementById('aiResult').innerHTML = '<span style="color:#feca57">🧠 Analyzing schema with Claude AI...</span>';
+
+            fetch('/api/analyze-schema', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    api_key: apiKey,
+                    schema: currentSchema,
+                    image_path: imagePath
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    currentConfig = {
+                        database: getConnectionConfig(),
+                        pottery: data.pottery_table,
+                        media: data.media_table,
+                        relation: data.relation,
+                        images: {
+                            base_path: imagePath,
+                            pattern: data.image_path_pattern
+                        },
+                        query: data.generated_query
+                    };
+
+                    document.getElementById('aiResult').innerHTML = `
+                        <div style="color:#1dd1a1; margin-bottom:15px;">✓ Analysis completed (${(data.confidence * 100).toFixed(0)}% confidence)</div>
+                        <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px; font-family:monospace; font-size:12px; white-space:pre-wrap;">
+<b>Pottery Table:</b> ${data.pottery_table?.name}
+<b>Media Table:</b> ${data.media_table?.name || 'N/A'}
+<b>Relationship:</b> ${data.relation?.type}
+<b>Image Pattern:</b> ${data.image_path_pattern}
+
+<b>Generated Query:</b>
+<span id="queryPreview">${data.generated_query}</span>
+
+<b>Notes:</b> ${data.notes || 'None'}
+                        </div>
+                        <div style="margin-top:15px; padding:10px; background:rgba(72,219,251,0.1); border-radius:8px;">
+                            <label style="display:flex; align-items:center; cursor:pointer; color:#48dbfb;">
+                                <input type="checkbox" id="oneImagePerPottery" checked onchange="toggleDistinctOn()"
+                                       style="width:18px; height:18px; margin-right:10px; cursor:pointer;">
+                                <span><b>One image per pottery</b> (DISTINCT ON) - otherwise all images</span>
+                            </label>
+                        </div>
+                        <button class="btn-success" style="margin-top:15px;" onclick="saveAIConfig()">💾 Save AI Configuration</button>
+                        <button class="btn-warning" style="margin-top:15px; margin-left:10px;" onclick="showManualConfig()">✏️ Edit Manually</button>
+                    `;
+                } else {
+                    document.getElementById('aiResult').innerHTML = `<span style="color:#ff6b6b">✗ ${data.error}</span>`;
+                }
+            });
+        }
+
+        let originalQuery = '';
+        let distinctOnQuery = '';
+
+        function toggleDistinctOn() {
+            const useDistinctOn = document.getElementById('oneImagePerPottery').checked;
+            let query = currentConfig.query;
+
+            if (useDistinctOn) {
+                // Add DISTINCT ON if not present
+                if (!query.includes('DISTINCT ON')) {
+                    query = query.replace(/SELECT DISTINCT\s+/i, 'SELECT DISTINCT ON (p.id_rep) ');
+                    query = query.replace(/SELECT\s+(?!DISTINCT)/i, 'SELECT DISTINCT ON (p.id_rep) ');
+                }
+            } else {
+                // Remove DISTINCT ON, keep just DISTINCT
+                query = query.replace(/DISTINCT ON\s*\([^)]+\)\s*/i, 'DISTINCT ');
+            }
+
+            currentConfig.query = query;
+            document.getElementById('queryPreview').textContent = query;
+        }
+
+        function saveAIConfig() {
+            const name = prompt('Nome configurazione:', 'ai_config_' + Date.now());
+            if (!name) return;
+
+            fetch('/api/save-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, config: currentConfig })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Configuration saved!');
+                    loadSavedConfigs();
+                }
+            });
+        }
+
+        function showManualConfig() {
+            document.getElementById('manualConfig').style.display = 'block';
+        }
+
+        function loadSavedConfigs() {
+            fetch('/api/list-configs')
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById('savedConfigs');
+                    const select = document.getElementById('configSelect');
+
+                    if (data.configs.length === 0) {
+                        container.innerHTML = '<p style="color:#888">No saved configurations</p>';
+                        return;
+                    }
+
+                    container.innerHTML = data.configs.map(c => `
+                        <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:10px;">
+                            <span>${c.name}</span>
+                            <button class="btn-primary" onclick="loadConfig('${c.name}')">Load</button>
+                        </div>
+                    `).join('');
+
+                    select.innerHTML = '<option value="">-- Select --</option>' +
+                        data.configs.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+                });
+        }
+
+        function loadConfig(name) {
+            fetch(`/api/load-config/${name}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        currentConfig = data.config;
+                        alert('Configuration loaded!');
+                        document.getElementById('configSelect').value = name;
+                    }
+                });
+        }
+
+        // Charts
+        function initCharts() {
+            const layout = {
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { color: '#fff' },
+                margin: { t: 30, b: 40, l: 50, r: 20 }
+            };
+
+            Plotly.newPlot('periodChart', [{ values: [], labels: [], type: 'pie', hole: 0.4 }], { ...layout, showlegend: true });
+            Plotly.newPlot('decorationChart', [{ x: [], y: [], type: 'bar', marker: { color: '#a55eea' }}], layout);
+        }
+
+        function updateCharts(stats) {
+            const periods = Object.entries(stats.periods || {});
+            if (periods.length > 0) {
+                Plotly.update('periodChart', { values: [periods.map(p => p[1])], labels: [periods.map(p => p[0])] });
+            }
+
+            const decorations = Object.entries(stats.decorations || {});
+            if (decorations.length > 0) {
+                Plotly.update('decorationChart', { x: [decorations.map(d => d[0])], y: [decorations.map(d => d[1])] });
+            }
+        }
+
+        // Classification
+        function startClassification() {
+            const configName = document.getElementById('configSelect').value;
+            const limit = document.getElementById('limitInput').value;
+
+            if (!configName && !currentConfig) {
+                alert('Please select a configuration');
+                return;
+            }
+
+            if (configName) {
+                fetch(`/api/load-config/${configName}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            socket.emit('start', { config: data.config, limit: limit ? parseInt(limit) : null });
+                        }
+                    });
+            } else {
+                socket.emit('start', { config: currentConfig, limit: limit ? parseInt(limit) : null });
+            }
+
+            document.getElementById('btnStart').disabled = true;
+            document.getElementById('btnPause').disabled = false;
+            document.getElementById('btnStop').disabled = false;
+
+            startTimer();
+        }
+
+        function togglePause() {
+            socket.emit('pause');
+        }
+
+        function stopClassification() {
+            socket.emit('stop');
+            stopTimer();
+        }
+
+        function exportResults() {
+            fetch('/api/export')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '/api/download';
+                    } else {
+                        alert('Errore: ' + data.error);
+                    }
+                });
+        }
+
+        function startTimer() {
+            startTime = new Date();
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((new Date() - startTime) / 1000);
+                const mins = Math.floor(elapsed / 60);
+                const secs = elapsed % 60;
+                document.getElementById('statTime').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+        }
+
+        function addLog(message, type = 'info') {
+            const container = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + type;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            container.insertBefore(entry, container.firstChild);
+        }
+
+        // Socket events
+        socket.on('status', (data) => {
+            addLog(data.message || data.status, data.status === 'error' ? 'error' : 'info');
+
+            if (data.status === 'completed' || data.status === 'stopped') {
+                document.getElementById('btnStart').disabled = false;
+                document.getElementById('btnPause').disabled = true;
+                document.getElementById('btnStop').disabled = true;
+                stopTimer();
+            }
+        });
+
+        socket.on('progress', (data) => {
+            const percent = data.total > 0 ? (data.processed / data.total * 100).toFixed(1) : 0;
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressFill').textContent = percent + '%';
+
+            document.getElementById('statProcessed').textContent = data.processed;
+            document.getElementById('statTotal').textContent = data.total;
+            document.getElementById('statErrors').textContent = data.errors;
+
+            // Update current item
+            const item = data.current_item;
+            if (item) {
+                document.getElementById('currentThumbnail').src = item.thumbnail || '';
+                document.getElementById('currentTitle').textContent = item.filename || item.id || 'Unknown';
+
+                const classification = item.classification;
+                if (classification?.success) {
+                    document.getElementById('mlResult').style.display = 'block';
+                    document.getElementById('mlDetails').innerHTML = `
+                        <div>Period: <strong>${classification.period_suggestion}</strong> (${classification.period_confidence}%)</div>
+                        <div>Top Match: ${classification.top_match?.id || '-'}</div>
+                    `;
+                }
+            }
+
+            updateCharts(data.statistics);
+        });
+
+        // ===============================
+        // Help Documentation
+        // ===============================
+        let currentHelpLang = 'en';
+
+        function setHelpLang(lang) {
+            currentHelpLang = lang;
+            document.getElementById('langEn').classList.toggle('active', lang === 'en');
+            document.getElementById('langIt').classList.toggle('active', lang === 'it');
+            loadHelpContent();
+        }
+
+        function loadHelpContent() {
+            const container = document.getElementById('helpContent');
+            container.innerHTML = '<p>Loading documentation...</p>';
+
+            fetch(`/api/docs/${currentHelpLang}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        container.innerHTML = data.html;
+                    } else {
+                        container.innerHTML = `<p style="color:#ff6b6b;">Error loading documentation: ${data.error}</p>`;
+                    }
+                })
+                .catch(err => {
+                    container.innerHTML = `<p style="color:#ff6b6b;">Error: ${err.message}</p>`;
+                });
+        }
+
+        // Load help on first tab switch
+        let helpLoaded = false;
+        const originalShowTab = showTab;
+        showTab = function(name) {
+            originalShowTab(name);
+            if (name === 'help' && !helpLoaded) {
+                loadHelpContent();
+                helpLoaded = true;
+            }
+        };
+    </script>
+</body>
+</html>

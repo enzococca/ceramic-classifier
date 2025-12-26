@@ -1,0 +1,47 @@
+{
+  "database": {
+    "type": "postgresql",
+    "connection": {
+      "host": "localhost",
+      "port": 5433,
+      "database": "khutm2",
+      "user": "postgres",
+      "password": "postgres"
+    }
+  },
+  "pottery": {
+    "fields": {
+      "area": "area",
+      "decoration": "exdeco",
+      "decoration_type": "descrip_ex_deco",
+      "description": "note",
+      "fabric": "fabric",
+      "form": "form",
+      "period": "anno",
+      "site": "sito",
+      "us": "us"
+    },
+    "id_field": "id_rep",
+    "name": "pottery_table"
+  },
+  "media": {
+    "filename_field": "filepath",
+    "id_field": "id_media",
+    "name": "mediaentity_view",
+    "path_field": "path_resize"
+  },
+  "relation": {
+    "direct_image_field": null,
+    "entity_type_field": "entity_type",
+    "entity_type_value": "CERAMICA",
+    "junction_table": "mediaentity_view",
+    "media_fk": "id_media",
+    "pottery_fk": "id_entity",
+    "type": "junction"
+  },
+  "images": {
+    "base_path": "/Volumes/extesione4T/KTM2025/photolog/original",
+    "pattern": "{id_media}_{filename}.png"
+  },
+  "query": "SELECT DISTINCT ON (p.id_rep) p.id_rep as id, p.sito as site, p.area as area, p.us as us, p.form as form, p.exdeco as decoration, p.descrip_ex_deco as decoration_type, p.fabric as fabric, p.anno as period, p.note as description, m.id_media as media_id, m.filepath as filename, m.path_resize as filepath\n        FROM pottery_table p\n        \n            JOIN mediaentity_view r ON r.id_entity = p.id_rep AND r.entity_type = 'CERAMICA'\n            JOIN mediaentity_view m ON m.id_media = r.id_media\n            \n        WHERE (p.exdeco = 'Yes' OR p.intdeco = 'Yes')\n        ORDER BY p.id_rep"
+}

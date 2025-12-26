@@ -1,0 +1,44 @@
+{
+  "database": {
+    "type": "excel",
+    "connection": {
+      "file_path": "/Users/enzo/ceramica-classifier/examples/esempio_catalogo_museo.xlsx",
+      "database": "/Users/enzo/ceramica-classifier/examples/esempio_catalogo_museo.xlsx"
+    }
+  },
+  "pottery": {
+    "fields": {
+      "area": "Provenienza",
+      "decoration": "Stato_Decorazione",
+      "decoration_type": "Stato_Decorazione",
+      "description": "Descrizione",
+      "fabric": "Materiale",
+      "form": "Sottocategoria",
+      "period": "Datazione",
+      "site": null,
+      "us": "Provenienza"
+    },
+    "id_field": "Codice_Reperto",
+    "name": "Catalogo"
+  },
+  "media": {
+    "filename_field": "Foto_Principale",
+    "id_field": "ID_Foto",
+    "name": null,
+    "path_field": null
+  },
+  "relation": {
+    "direct_image_field": "Foto_Principale",
+    "entity_type_field": null,
+    "entity_type_value": null,
+    "junction_table": null,
+    "media_fk": null,
+    "pottery_fk": null,
+    "type": "embedded"
+  },
+  "images": {
+    "base_path": "/Volumes/extesione4T/KTM2025/photolog/original",
+    "pattern": "{Foto_Principale}"
+  },
+  "query": "SELECT DISTINCT ON (p.Codice_Reperto) p.Codice_Reperto as id, p.Provenienza as area, p.Provenienza as us, p.Sottocategoria as form, p.Stato_Decorazione as decoration, p.Stato_Decorazione as decoration_type, p.Materiale as fabric, p.Datazione as period, p.Descrizione as description\n        FROM Catalogo p\n        \n        WHERE p.Stato_Decorazione LIKE '%Decorato%'\n        ORDER BY p.Codice_Reperto"
+}

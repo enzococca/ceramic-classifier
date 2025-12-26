@@ -1,0 +1,45 @@
+{
+  "database": {
+    "type": "postgresql",
+    "connection": {
+      "host": "localhost",
+      "port": 5433,
+      "database": "khutm2",
+      "user": "postgres",
+      "password": "postgres"
+    }
+  },
+  "pottery": {
+    "fields": {
+      "area": "area",
+      "decoration": "exdeco",
+      "decoration_type": "decoration_type",
+      "description": "note",
+      "fabric": "fabric",
+      "form": "form",
+      "period": "datazione",
+      "site": "sito",
+      "us": "us"
+    },
+    "id_field": "id_rep",
+    "name": "pottery_table"
+  },
+  "media": {
+    "filename_field": "filename",
+    "id_field": "id_media",
+    "name": "media_table",
+    "path_field": "filepath"
+  },
+  "relation": {
+    "direct_image_field": null,
+    "junction_table": "media_to_entity_table",
+    "media_fk": "id_media",
+    "pottery_fk": "id_entity",
+    "type": "junction"
+  },
+  "images": {
+    "base_path": "/Volumes/extesione4T/KTM2025/photolog/original",
+    "pattern": "/Volumes/extesione4T/KTM2025/photolog/original/{filename}.{filetype}"
+  },
+  "query": "SELECT DISTINCT p.id_rep as id, p.sito as site, p.area as area, p.us as us, p.form as form, p.exdeco as decoration, p.decoration_type as decoration_type, p.fabric as fabric, p.datazione as period, p.note as description, m.id_media as media_id, m.filename as filename, m.filepath as filepath\n        FROM pottery_table p\n        \n            JOIN media_to_entity_table r ON r.id_entity = p.id_rep\n            JOIN media_table m ON m.id_media = r.id_media\n            \n        WHERE p.exdeco = 'Yes'\n        ORDER BY p.id_rep"
+}

@@ -1,0 +1,44 @@
+{
+  "database": {
+    "type": "excel",
+    "connection": {
+      "file_path": "/Users/enzo/ceramica-classifier/examples/esempio_due_fogli.xlsx",
+      "database": "/Users/enzo/ceramica-classifier/examples/esempio_due_fogli.xlsx"
+    }
+  },
+  "pottery": {
+    "fields": {
+      "area": "Area",
+      "decoration": "Ext_Decoration",
+      "decoration_type": "Decoration_Type",
+      "description": "Notes",
+      "fabric": "Fabric",
+      "form": "Shape",
+      "period": "Dating",
+      "site": "Site",
+      "us": "SU"
+    },
+    "id_field": "ID",
+    "name": "Pottery"
+  },
+  "media": {
+    "filename_field": "Filename",
+    "id_field": "Image_ID",
+    "name": "Images",
+    "path_field": "Full_Path"
+  },
+  "relation": {
+    "direct_image_field": "Image_ID",
+    "entity_type_field": null,
+    "entity_type_value": null,
+    "junction_table": null,
+    "media_fk": "Image_ID",
+    "pottery_fk": "Image_ID",
+    "type": "direct"
+  },
+  "images": {
+    "base_path": "/Volumes/extesione4T/KTM2025/photolog/original",
+    "pattern": "{Image_ID}_{Filename}.png"
+  },
+  "query": "SELECT DISTINCT ON (p.ID) p.ID as id, p.Site as site, p.Area as area, p.SU as us, p.Shape as form, p.Ext_Decoration as decoration, p.Decoration_Type as decoration_type, p.Fabric as fabric, p.Dating as period, p.Notes as description, m.Image_ID as media_id, m.Filename as filename, m.Full_Path as filepath\n        FROM Pottery p\n        \n            JOIN Images m ON m.Image_ID = p.Image_ID\n            \n        WHERE (p.Ext_Decoration = 'Yes' OR p.Int_Decoration = 'Yes')\n        ORDER BY p.ID"
+}

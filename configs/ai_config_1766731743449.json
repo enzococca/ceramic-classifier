@@ -1,0 +1,42 @@
+{
+  "database": {
+    "type": "excel",
+    "connection": {
+      "file_path": "/Users/enzo/ceramica-khutm/exports/ceramic.xlsx",
+      "database": "/Users/enzo/ceramica-khutm/exports/ceramic.xlsx"
+    }
+  },
+  "pottery": {
+    "fields": {
+      "area": "Area",
+      "decoration": "Ext Deco",
+      "decoration_type": "Decoration Type",
+      "description": "Specific Form",
+      "fabric": "Fabric",
+      "form": "Form",
+      "period": "ML Period",
+      "site": "Sito",
+      "us": "US"
+    },
+    "id_field": "ID Rep",
+    "name": "Pottery Classification"
+  },
+  "media": {
+    "filename_field": null,
+    "id_field": null,
+    "name": null,
+    "path_field": null
+  },
+  "relation": {
+    "direct_image_field": "Image Filename",
+    "junction_table": null,
+    "media_fk": null,
+    "pottery_fk": null,
+    "type": "embedded"
+  },
+  "images": {
+    "base_path": "/Volumes/extesione4T/KTM2025/photolog/original",
+    "pattern": "/Volumes/extesione4T/KTM2025/photolog/original/{Image Filename}.jpg"
+  },
+  "query": "SELECT DISTINCT p.ID Rep as id, p.Sito as site, p.Area as area, p.US as us, p.Form as form, p.Ext Deco as decoration, p.Decoration Type as decoration_type, p.Fabric as fabric, p.ML Period as period, p.Specific Form as description\n        FROM Pottery Classification p\n        \n        WHERE p.Ext Deco = 'Yes'\n        ORDER BY p.ID Rep"
+}
