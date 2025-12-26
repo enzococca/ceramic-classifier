@@ -2,7 +2,7 @@
 
 **ML Classification System for Umm an-Nar to Wadi Suq, Late Bronze Age, Iron Age**
 
-A Machine Learning-based system for automatically classifying decorated pottery sherds from Oman archaeological excavations. The system compares pottery decorations with reference collections (Schmidt 1937 corpus and other sources) to identify typological parallels and suggest chronological attributions.
+A Machine Learning-based system for automatically classifying decorated pottery sherds from Oman archaeological excavations. The system compares pottery decorations with reference collections to identify typological parallels and suggest chronological attributions.
 
 ## Features
 
@@ -156,12 +156,6 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 ## Author
 
 **Enzo Cocca**
-
-## Acknowledgments
-
-- Schmidt 1937 pottery corpus for reference collection
-- Anthropic Claude API for AI schema analysis
-- Flask and SocketIO for the web framework
 
 ## Related Projects
 
